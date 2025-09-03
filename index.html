@@ -1,229 +1,112 @@
-<!DOCTYPE html>
-<html lang="id" class="light">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Store Sanghyang WMS</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-</head>
-<body class="bg-gray-100 dark:bg-gray-900 dark:text-white min-h-screen">
-  <!-- Navbar -->
-  <nav class="bg-blue-600 text-white p-4 flex justify-between">
-    <h1 class="text-xl font-bold">📦 Store Sanghyang</h1>
-    <div class="space-x-4">
-      <button onclick="showTab('dashboard')">Dashboard</button>
-      <button onclick="showTab('masuk')">Barang Masuk</button>
-      <button onclick="showTab('keluar')">Barang Keluar</button>
-      <button onclick="showTab('riwayat')">Riwayat</button>
-      <button onclick="showTab('pengaturan')">Pengaturan</button>
+<!-- Pengaturan -->
+<div id="pengaturan" class="p-4 hidden">
+  <h2 class="text-2xl font-bold mb-6">⚙️ Pengaturan</h2>
+  
+  <form id="settingsForm" class="grid gap-6 md:grid-cols-2">
+    <!-- Admin -->
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-4 transition">
+      <label class="block font-semibold mb-2">Tambah Admin</label>
+      <input type="text" id="admin" class="w-full border rounded p-2 dark:bg-gray-700" placeholder="Nama Admin">
     </div>
-  </nav>
 
-  <!-- Dashboard -->
-  <div id="dashboard" class="p-4">
-    <h2 class="text-xl font-bold mb-2">Dashboard</h2>
-    <p>Selamat datang di sistem manajemen Store Sanghyang.</p>
+    <!-- Store -->
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-4 transition">
+      <label class="block font-semibold mb-2">Tambah Store</label>
+      <input type="text" id="storeName" class="w-full border rounded p-2 mb-2 dark:bg-gray-700" placeholder="Nama Store">
+      <textarea id="storeAddress" class="w-full border rounded p-2 dark:bg-gray-700" placeholder="Alamat Store"></textarea>
+    </div>
+
+    <!-- Font -->
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-4 transition">
+      <label class="block font-semibold mb-2">Font</label>
+      <select id="fontFamily" class="w-full border rounded p-2 dark:bg-gray-700">
+        <option value="sans">Default (Sans)</option>
+        <option value="poppins">Poppins</option>
+        <option value="roboto">Roboto</option>
+        <option value="montserrat">Montserrat</option>
+      </select>
+    </div>
+
+    <!-- Script Spreadsheet -->
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-4 transition">
+      <label class="block font-semibold mb-2">Script Spreadsheet (API URL)</label>
+      <input type="text" id="apiUrl" class="w-full border rounded p-2 dark:bg-gray-700" placeholder="https://script.google.com/macros/s/.../exec">
+    </div>
+
+    <!-- Tema -->
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-4 transition">
+      <label class="block font-semibold mb-2">Tema</label>
+      <select id="tema" class="w-full border rounded p-2 dark:bg-gray-700">
+        <option value="light">☀️ Light</option>
+        <option value="dark">🌙 Dark</option>
+      </select>
+    </div>
+  </form>
+
+  <div class="mt-6 space-x-4">
+    <button onclick="saveSettings()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">💾 Simpan</button>
+    <button onclick="resetSettings()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition">♻️ Reset</button>
   </div>
+</div>
 
-  <!-- Barang Masuk -->
-  <div id="masuk" class="p-4 hidden">
-    <h2 class="text-xl font-bold mb-2">Barang Masuk</h2>
-    <button onclick="startScan('masuk')" class="bg-green-600 text-white px-4 py-2 rounded">📷 Scan Barcode</button>
-    <div id="reader-masuk" class="hidden mt-4"></div>
-    <form id="formMasuk" class="mt-4 space-y-2">
-      <input type="text" id="kodeMasuk" placeholder="Kode Barang" class="w-full border p-2 rounded">
-      <input type="text" id="namaMasuk" placeholder="Nama Barang" class="w-full border p-2 rounded">
-      <input type="number" id="jumlahMasuk" placeholder="Jumlah" class="w-full border p-2 rounded">
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Simpan</button>
-    </form>
-  </div>
+<script>
+  // Default Settings
+  const defaultSettings = {
+    admin: "Admin",
+    storeName: "Store Sanghyang",
+    storeAddress: "",
+    fontFamily: "sans",
+    apiUrl: "",
+    tema: "light"
+  };
 
-  <!-- Barang Keluar -->
-  <div id="keluar" class="p-4 hidden">
-    <h2 class="text-xl font-bold mb-2">Barang Keluar</h2>
-    <button onclick="startScan('keluar')" class="bg-green-600 text-white px-4 py-2 rounded">📷 Scan Barcode</button>
-    <div id="reader-keluar" class="hidden mt-4"></div>
-    <form id="formKeluar" class="mt-4 space-y-2">
-      <input type="text" id="kodeKeluar" placeholder="Kode Barang" class="w-full border p-2 rounded">
-      <input type="text" id="namaKeluar" placeholder="Nama Barang" class="w-full border p-2 rounded">
-      <input type="number" id="jumlahKeluar" placeholder="Jumlah" class="w-full border p-2 rounded">
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Simpan</button>
-    </form>
-  </div>
-
-  <!-- Riwayat -->
-  <div id="riwayat" class="p-4 hidden">
-    <h2 class="text-xl font-bold mb-2">Riwayat</h2>
-    <p>Data riwayat transaksi akan ditampilkan dari spreadsheet.</p>
-  </div>
-
-  <!-- Pengaturan -->
-  <div id="pengaturan" class="p-4 hidden">
-    <h2 class="text-xl font-bold mb-4">Pengaturan Sistem</h2>
-    <form id="settingsForm" class="space-y-4">
-      <!-- Informasi Store -->
-      <div>
-        <label class="block font-medium">Nama Store</label>
-        <input type="text" id="namaStore" class="w-full border rounded p-2" placeholder="Store Sanghyang">
-      </div>
-      <div>
-        <label class="block font-medium">Alamat Store</label>
-        <textarea id="alamatStore" class="w-full border rounded p-2" placeholder="Jl. Raya No. 123"></textarea>
-      </div>
-      <!-- API & Spreadsheet -->
-      <div>
-        <label class="block font-medium">URL Web App</label>
-        <input type="text" id="apiUrl" class="w-full border rounded p-2" placeholder="https://script.google.com/macros/s/.../exec">
-      </div>
-      <div>
-        <label class="block font-medium">Spreadsheet ID (opsional)</label>
-        <input type="text" id="spreadsheetId" class="w-full border rounded p-2" placeholder="1AbCDefGhIjKlmn...">
-      </div>
-      <!-- User -->
-      <div>
-        <label class="block font-medium">Nama Operator</label>
-        <input type="text" id="operator" class="w-full border rounded p-2" placeholder="Admin / Petugas">
-      </div>
-      <!-- Preferensi -->
-      <div>
-        <label class="block font-medium">Tema</label>
-        <select id="tema" class="w-full border rounded p-2">
-          <option value="light">☀️ Light</option>
-          <option value="dark">🌙 Dark</option>
-        </select>
-      </div>
-      <div>
-        <label class="block font-medium">Bahasa</label>
-        <select id="bahasa" class="w-full border rounded p-2">
-          <option value="id">Indonesia</option>
-          <option value="en">English</option>
-        </select>
-      </div>
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Simpan Pengaturan</button>
-      <button type="button" onclick="resetSettings()" class="bg-red-600 text-white px-4 py-2 rounded">Reset</button>
-    </form>
-  </div>
-
-  <script>
-    // ===== Navigation =====
-    function showTab(tab) {
-      ["dashboard","masuk","keluar","riwayat","pengaturan"].forEach(id=>{
-        document.getElementById(id).classList.add("hidden");
-      });
-      document.getElementById(tab).classList.remove("hidden");
-    }
-
-    // ===== Settings =====
-    const defaultSettings = {
-      namaStore: "Store Sanghyang",
-      alamatStore: "",
-      apiUrl: "",
-      spreadsheetId: "",
-      operator: "Admin",
-      tema: "light",
-      bahasa: "id"
+  function applySettings(settings) {
+    // Terapkan tema
+    document.documentElement.classList.toggle("dark", settings.tema === "dark");
+    // Terapkan font
+    let fontMap = {
+      "poppins": "'Poppins', sans-serif",
+      "roboto": "'Roboto', sans-serif",
+      "montserrat": "'Montserrat', sans-serif",
+      "sans": "system-ui, sans-serif"
     };
+    document.body.style.fontFamily = fontMap[settings.fontFamily] || fontMap["sans"];
+  }
 
-    function loadSettings() {
-      const saved = JSON.parse(localStorage.getItem("wmsSettings")) || defaultSettings;
-      document.getElementById("namaStore").value = saved.namaStore;
-      document.getElementById("alamatStore").value = saved.alamatStore;
-      document.getElementById("apiUrl").value = saved.apiUrl;
-      document.getElementById("spreadsheetId").value = saved.spreadsheetId;
-      document.getElementById("operator").value = saved.operator;
-      document.getElementById("tema").value = saved.tema;
-      document.getElementById("bahasa").value = saved.bahasa;
-      document.documentElement.classList.toggle("dark", saved.tema === "dark");
-    }
+  function loadSettings() {
+    const saved = JSON.parse(localStorage.getItem("wmsSettings")) || defaultSettings;
+    document.getElementById("admin").value = saved.admin;
+    document.getElementById("storeName").value = saved.storeName;
+    document.getElementById("storeAddress").value = saved.storeAddress;
+    document.getElementById("fontFamily").value = saved.fontFamily;
+    document.getElementById("apiUrl").value = saved.apiUrl;
+    document.getElementById("tema").value = saved.tema;
+    applySettings(saved);
+  }
 
-    document.getElementById("settingsForm").addEventListener("submit", (e)=>{
-      e.preventDefault();
-      const settings = {
-        namaStore: document.getElementById("namaStore").value,
-        alamatStore: document.getElementById("alamatStore").value,
-        apiUrl: document.getElementById("apiUrl").value,
-        spreadsheetId: document.getElementById("spreadsheetId").value,
-        operator: document.getElementById("operator").value,
-        tema: document.getElementById("tema").value,
-        bahasa: document.getElementById("bahasa").value
-      };
-      localStorage.setItem("wmsSettings", JSON.stringify(settings));
-      alert("✅ Pengaturan disimpan!");
+  function saveSettings() {
+    const settings = {
+      admin: document.getElementById("admin").value,
+      storeName: document.getElementById("storeName").value,
+      storeAddress: document.getElementById("storeAddress").value,
+      fontFamily: document.getElementById("fontFamily").value,
+      apiUrl: document.getElementById("apiUrl").value,
+      tema: document.getElementById("tema").value,
+    };
+    localStorage.setItem("wmsSettings", JSON.stringify(settings));
+    applySettings(settings);
+    alert("✅ Pengaturan disimpan!");
+  }
+
+  function resetSettings() {
+    if (confirm("Yakin reset ke default?")) {
+      localStorage.removeItem("wmsSettings");
       loadSettings();
-    });
-
-    function resetSettings() {
-      if (confirm("Yakin reset ke default?")) {
-        localStorage.removeItem("wmsSettings");
-        loadSettings();
-      }
     }
+  }
 
-    loadSettings();
+  loadSettings();
+</script>
 
-    // ===== Scan Barcode =====
-    let html5QrCode;
-    function startScan(type) {
-      const readerId = "reader-"+type;
-      const reader = document.getElementById(readerId);
-      reader.classList.remove("hidden");
-      html5QrCode = new Html5Qrcode(readerId);
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        (decodedText) => {
-          html5QrCode.stop().then(()=>reader.classList.add("hidden"));
-          if (type==="masuk") document.getElementById("kodeMasuk").value = decodedText;
-          if (type==="keluar") document.getElementById("kodeKeluar").value = decodedText;
-        }
-      );
-    }
-
-    // ===== Submit Forms =====
-    function sendData(jenis, kode, nama, jumlah) {
-      const settings = JSON.parse(localStorage.getItem("wmsSettings")) || defaultSettings;
-      if (!settings.apiUrl) {
-        alert("❌ URL Web App belum diatur di Pengaturan!");
-        return;
-      }
-      const payload = {
-        jenis: jenis,
-        kodeBarang: kode,
-        namaBarang: nama,
-        jumlah: jumlah,
-        operator: settings.operator,
-        store: settings.namaStore
-      };
-      fetch(settings.apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      .then(res=>res.json())
-      .then(res=>alert("✅ Data tersimpan: "+JSON.stringify(res)))
-      .catch(err=>alert("❌ Gagal kirim data! "+err));
-    }
-
-    document.getElementById("formMasuk").addEventListener("submit", (e)=>{
-      e.preventDefault();
-      sendData("masuk",
-        document.getElementById("kodeMasuk").value,
-        document.getElementById("namaMasuk").value,
-        document.getElementById("jumlahMasuk").value
-      );
-      e.target.reset();
-    });
-
-    document.getElementById("formKeluar").addEventListener("submit", (e)=>{
-      e.preventDefault();
-      sendData("keluar",
-        document.getElementById("kodeKeluar").value,
-        document.getElementById("namaKeluar").value,
-        document.getElementById("jumlahKeluar").value
-      );
-      e.target.reset();
-    });
-  </script>
-</body>
-</html>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat&family=Poppins&family=Roboto&display=swap" rel="stylesheet">

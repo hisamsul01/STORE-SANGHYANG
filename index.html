@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Warehouse Management System - Complete</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    .hidden { display: none; }
+    body { transition: all 0.3s ease; }
+    .dark-bg { background-color: #1f2937; color: #f9fafb; }
+    .dark-section { background-color: #374151; color: #d1d5db; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+
+  <header class="text-center py-6 bg-white shadow-md rounded-lg max-w-4xl mx-auto mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">Warehouse Management System</h1>
+  </header>
+
+  <nav class="flex flex-wrap justify-center gap-2 mb-6">
+    <button onclick="showSection('barangMasuk')" class="nav-btn bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">Barang Masuk</button>
+    <button onclick="showSection('barangKeluar')" class="nav-btn bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">Barang Keluar</button>
+    <button onclick="showSection('stock')" class="nav-btn bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded">Stock</button>
+    <button onclick="showSection('outgoing')" class="nav-btn bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded">Outgoing to Store</button>
+    <button onclick="showSection('pengaturan')" class="nav-btn bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded">Pengaturan</button>
+  </nav>
+
+  <!-- Pengaturan -->
+  <section id="pengaturan" class="hidden max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-2xl font-semibold mb-4">Pengaturan</h2>
+    <div class="flex justify-center gap-4 mb-6">
+      <button onclick="showSubSetting('dashboard')" class="px-4 py-2 bg-gray-200 rounded active">Dashboard</button>
+      <button onclick="showSubSetting('store')" class="px-4 py-2 bg-gray-200 rounded">Store</button>
+    </div>
+
+    <!-- Dashboard Settings -->
+    <div id="dashboardSettings" class="space-y-4">
+      <h3 class="text-xl font-medium">Dashboard Settings</h3>
+      <div class="flex items-center justify-between">
+        <label class="text-lg">Mode Gelap:</label>
+        <label class="cursor-pointer">
+          <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()" class="sr-only peer">
+          <div class="relative bg-gray-300 peer-checked:bg-blue-600 w-11 h-6 rounded-full peer-transition peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+        </label>
+      </div>
+      <div class="flex items-center justify-between">
+        <label class="text-lg">Aktifkan Notifikasi:</label>
+        <label class="cursor-pointer">
+          <input type="checkbox" id="notificationsToggle" class="sr-only peer">
+          <div class="relative bg-gray-300 peer-checked:bg-blue-600 w-11 h-6 rounded-full peer-transition peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+        </label>
+      </div>
+      <div class="flex items-center justify-between">
+        <label class="text-lg">Tema Font:</label>
+        <select id="fontThemeSelect" class="border border-gray-300 rounded px-2 py-1" onchange="changeFont()">
+          <option value="arial">Arial (Default)</option>
+          <option value="times">Times New Roman</option>
+          <option value="courier">Courier New</option>
+        </select>
+      </div>
+      <button onclick="saveDashboardSettings()" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">Simpan Pengaturan Dashboard</button>
+      <div id="msgDashboard" class="text-green-500 mt-2"></div>
+    </div>
+
+    <!-- Store Settings -->
+    <div id="storeSettings" class="hidden space-y-4">
+      <h3 class="text-xl font-medium">Store Settings</h3>
+      <p>Daftar store sudah tetap (tidak bisa tambah/hapus). Berikut daftar store yang tersedia:</p>
+      <table class="w-full border-collapse border border-gray-300">
+        <thead>
+          <tr class="bg-green-500 text-white">
+            <th class="px-4 py-2 border border-gray-300">No Store</th>
+            <th class="px-4 py-2 border border-gray-300">Nama Store</th>
+            <th class="px-4 py-2 border border-gray-300">Riwayat Pengiriman</th>
+          </tr>
+        </thead>
+        <tbody id="storeListBody"></tbody>
+      </table>
+
+      <!-- Modal for store history -->
+      <div id="storeHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg max-w-3xl w-full p-6 relative">
+          <h3 id="modalStoreName" class="text-xl font-semibold mb-4">Riwayat Pengiriman</h3>
+          <table class="w-full border-collapse border border-gray-300">
+            <thead>
+              <tr class="bg-orange-500 text-white">
+                <th class="px-4 py-2 border border-gray-300">Nama Barang</th>
+                <th class="px-4 py-2 border border-gray-300">Jumlah</th>
+                <th class="px-4 py-2 border border-gray-300">Tanggal</th>
+              </tr>
+            </thead>
+            <tbody id="storeHistoryBody"></tbody>
+          </table>
+          <button onclick="closeStoreHistory()" class="mt-4 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Barang Masuk -->
+  <section id="barangMasuk" class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+      <i data-lucide="plus-circle" class="w-6 h-6 text-blue-500"></i> Barang Masuk
+    </h2>
+    <div class="flex justify-center gap-4 mb-6">
+      <button id="btnManual" onclick="setBarangMasukMode('manual')" class="px-4 py-2 bg-blue-500 text-white rounded active">Input Manual</button>
+      <button id="btnBarcode" onclick="setBarangMasukMode('barcode')" class="px-4 py-2 bg-gray-300 rounded">By Barcode</button>
+    </div>
+    <form id="formBarangMasuk" class="space-y-4" onsubmit="handleBarangMasuk(event)">
+      <div id="manualInput">
+        <label class="block">Nama Barang:</label>
+        <input type="text" id="namaBarangMasuk" class="w-full border border-gray-300 rounded px-3 py-2" required />
+      </div>
+      <div id="barcodeInput" class="hidden">
+        <label class="block">Scan / Masukkan Barcode:</label>
+        <input type="text" id="barcodeBarangMasuk" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="Scan barcode di sini" onkeyup="handleBarcodeEnter(event)" />
+        <small class="text-gray-500">Masukkan barcode lalu tekan Enter</small>
+      </div>
+      <div>
+        <label class="block">Jumlah:</label>
+        <input type="number" id="qtyBarangMasuk" class="w-full border border-gray-300 rounded px-3 py-2" min="1" required />
+      </div>
+      <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded">Tambah Barang Masuk</button>
+    </form>
+    <div id="msgBarangMasuk" class="text-green-500 mt-4"></div>
+  </section>
+
+  <!-- Barang Keluar -->
+  <section id="barangKeluar" class="hidden max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+      <i data-lucide="minus-circle" class="w-6 h-6 text-red-500"></i> Barang Keluar
+    </h2>
+    <form id="formBarangKeluar" class="space-y-4">
+      <div>
+        <label class="block">Nama Barang:</label>
+        <input type="text" id="namaBarangKeluar" class="w-full border border-gray-300 rounded px-3 py-2" required />
+      </div>
+      <div>
+        <label class="block">Jumlah:</label>
+        <input type="number" id="qtyBarangKeluar" class="w-full border border-gray-300 rounded px-3 py-2" min="1" required />
+      </div>
+      <button type="submit" class="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded">Proses Barang Keluar</button>
+    </form>
+    <div id="msgBarangKeluar" class="text-green-500 mt-4"></div>
+  </section>
+
+  <!-- Stock -->
+  <section id="stock" class="hidden max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+      <i data-lucide="package" class="w-6 h-6 text-purple-500"></i> Stock Barang
+    </h2>
+    <table class="w-full mt-4 border-collapse border border-gray-300">
+      <thead>
+        <tr class="bg-blue-500 text-white">
+          <th class="px-4 py-2 border border-gray-300">Nama Barang</th>
+          <th class="px-4 py-2 border border-gray-300">Jumlah</th>
+        </tr>
+      </thead>
+      <tbody id="tableStockBody"></tbody>
+    </table>
+  </section>
+
+  <!-- Outgoing to Store -->
+  <section id="outgoing" class="hidden max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+      <i data-lucide="truck" class="w-6 h-6 text-orange-500"></i> Outgoing to Store
+    </h2>
+    <form id="formOutgoing" class="space-y-4">
+      <div>
+        <label class="block">Nama Barang:</label>
+        <input type="text" id="namaBarangOutgoing" class="w-full border border-gray-300 rounded px-3 py-2" required />
+      </div>
+      <div>
+        <label class="block">Jumlah:</label>
+        <input type="number" id="qtyBarangOutgoing" class="w-full border border-gray-300 rounded px-3 py-2" min="1" required />
+      </div>
+      <div>
+        <label class="block">Pilih Toko Tujuan:</label>
+        <select id="tokoTujuan" class="w-full border border-gray-300 rounded px-3 py-2" required></select>
+      </div>
+      <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white py-2 px-6 rounded">Kirim ke Store</button>
+    </form>
+    <div id="msgOutgoing" class="text-green-500 mt-4"></div>
+    <h3 class="text-xl font-medium mt-8 mb-4">Riwayat Outgoing</h3>
+    <table class="w-full mt-4 border-collapse border border-gray-300">
+      <thead>
+        <tr class="bg-orange-500 text-white">
+          <th class="px-4 py-2 border border-gray-300">Nama Barang</th>
+          <th class="px-4 py-2 border border-gray-300">Jumlah</th>
+          <th class="px-4 py-2 border border-gray-300">Toko Tujuan</th>
+          <th class="px-4 py-2 border border-gray-300">Tanggal</th>
+        </tr>
+      </thead>
+      <tbody id="tableOutgoingBody"></tbody>
+    </table>
+  </section>
+
+  <script>
+    // Fixed store list as per user request
+    const stores = [
+      { id: "01", name: "GENERAL STORE (ANYER)" },
+      { id: "02", name: "General store (JKT)" },
+      { id: "03", name: "MAIN KITCHEN STORAGE" },
+      { id: "04", name: "F&B ADMIN" },
+      { id: "05", name: "HOUSEKEEPING" },
+      { id: "10", name: "ENGINEERING STORE" },
+      { id: "11", name: "PROJECT STORE" },
+      { id: "12", name: "ADMIN & GENERAL" },
+      { id: "13", name: "SALES & MARKETING" },
+      { id: "14", name: "SECURITY" },
+      { id: "15", name: "FRONT OFFICE" },
+      { id: "16", name: "SPA" },
+      { id: "17", name: "HRD" },
+      { id: "21", name: "D'BISTRO" },
+      { id: "22", name: "KOREAN STORE (KANTIN)" },
+      { id: "23", name: "DBAR STORE" },
+      { id: "24", name: "LIQUOR STORE" },
+      { id: "25", name: "SOUVENIR SHOP" },
+      { id: "26", name: "SPORT & RECREATION" },
+      { id: "27", name: "JAPANESE STORE" },
+      { id: "28", name: "DRAGON BEACH CLUB STORE" },
+      { id: "29", name: "SUNSET GRILL STORE" },
+      { id: "31", name: "BANQUET STORE" },
+      { id: "40", name: "LAUNDRY STORE" }
+    ];
+
+    // LocalStorage keys
+    const OUTGOING_KEY = 'wms_outgoing';
+    const STOCK_KEY = 'wms_stock';
+    const SETTINGS_KEY = 'wms_settings';
+
+    // Utility functions for data persistence
+    function getOutgoing() {
+      return JSON.parse(localStorage.getItem(OUTGOING_KEY) || '[]');
+    }
+    function saveOutgoing(data) {
+      localStorage.setItem(OUTGOING_KEY, JSON.stringify(data));
+    }
+    function getStock() {
+      return JSON.parse(localStorage.getItem(STOCK_KEY) || '{}');
+    }
+    function saveStock(data) {
+      localStorage.setItem(STOCK_KEY, JSON.stringify(data));
+    }
+    function getSettings() {
+      return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    }
+    function saveSettings(data) {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+    }
+
+    // Load settings on page load
+    loadSettings();
+
+    // Show section and hide others
+    function showSection(id) {
+      document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+      if (id === 'pengaturan') {
+        showSubSetting('dashboard');
+      }
+      if (id === 'stock') renderStockTable();
+      if (id === 'outgoing') {
+        populateStoreDropdown();
+        renderOutgoingTable();
+      }
+      if (id === 'pengaturan') renderStoreList();
+    }
+
+    function showSubSetting(subId) {
+      ['dashboardSettings', 'storeSettings'].forEach(s => {
+        document.getElementById(s).classList.add('hidden');
+      });
+      document.getElementById(subId + 'Settings').classList.remove('hidden');
+      if (subId === 'store') renderStoreList();
+    }
+
+    function clearMessages() {
+      ['msgBarangMasuk', 'msgBarangKeluar', 'msgOutgoing', 'msgDashboard'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '';
+      });
+    }
+
+    // Theme functions
+    function toggleDarkMode() {
+      const body = document.body;
+      if (document.getElementById('darkModeToggle').checked) {
+        body.classList.add('dark-bg');
+        document.querySelectorAll('section').forEach(s => s.classList.add('dark-section'));
+      } else {
+        body.classList.remove('dark-bg');
+        document.querySelectorAll('section').forEach(s => s.classList.remove('dark-section'));
+      }
+    }
+
+    function changeFont() {
+      const select = document.getElementById('fontThemeSelect');
+      const body = document.body;
+      body.style.fontFamily = select.value === 'times' ? 'Times New Roman, serif' : select.value === 'courier' ? 'Courier New, monospace' : 'Arial, sans-serif';
+    }
+
+    function loadSettings() {
+      const settings = getSettings();
+      document.getElementById('darkModeToggle').checked = settings.darkMode || false;
+      document.getElementById('notificationsToggle').checked = settings.notifications || false;
+      document.getElementById('fontThemeSelect').value = settings.fontTheme || 'arial';
+      if (settings.darkMode) toggleDarkMode();
+      changeFont();
+    }
+
+    function saveDashboardSettings() {
+      const settings = getSettings();
+      settings.darkMode = document.getElementById('darkModeToggle').checked;
+      settings.notifications = document.getElementById('notificationsToggle').checked;
+      settings.fontTheme = document.getElementById('fontThemeSelect').value;
+      saveSettings(settings);
+      if (settings.notifications) alert('Notifikasi diaktifkan!');
+      document.getElementById('msgDashboard').textContent = 'Pengaturan dashboard disimpan!';
+    }
+
+    // Barang Masuk functions
+    function setBarangMasukMode(mode) {
+      document.getElementById('btnManual').classList.toggle('active', mode === 'manual');
+      document.getElementById('btnBarcode').classList.toggle('active', mode === 'barcode');
+      document.getElementById('manualInput').classList.toggle('hidden', mode !== 'manual');
+      document.getElementById('barcodeInput').classList.toggle('hidden', mode !== 'barcode');
+    }
+
+    function handleBarcodeEnter(event) {
+      if (event.key === 'Enter') {
+        const barcode = event.target.value;
+        document.getElementById('namaBarangMasuk').value = 'Barang dari ' + barcode;
+      }
+    }
+
+    function handleBarangMasuk(event) {
+      event.preventDefault();
+      clearMessages();
+      let nama;
+      if (document.getElementById('barcodeBarangMasuk').value) {
+        nama = document.getElementById('namaBarangMasuk').value || 'Barcode Item';
+      } else {
+        nama = document.getElementById('namaBarangMasuk').value;
+      }
+      const qty = parseInt(document.getElementById('qtyBarangMasuk').value);
+      if (!nama || !qty || qty < 1) {
+        showMessage('Barang Masuk', 'Input tidak valid!', 'red');
+        return;
+      }
+      const stock = getStock();
+      stock[nama] = (stock[nama] || 0) + qty;
+      saveStock(stock);
+      document.getElementById('msgBarangMasuk').textContent = `Barang masuk berhasil: ${qty} ${nama}`;
+      event.target.reset();
+    }
+
+    // Barang Keluar form
+    document.getElementById('formBarangKeluar').addEventListener('submit', function(e) {
+      e.preventDefault();
+      clearMessages();
+      const nama = document.getElementById('namaBarangKeluar').value;
+      const qty = parseInt(document.getElementById('qtyBarangKeluar').value);
+      if (!nama || !qty || qty < 1) {
+        document.getElementById('msgBarangKeluar').textContent = 'Input tidak valid!';
+        document.getElementById('msgBarangKeluar').classList.add('text-red-500');
+        return;
+      }
+      const stock = getStock();
+      if (!stock[nama] || stock[nama] < qty) {
+        document.getElementById('msgBarangKeluar').textContent = 'Stok tidak cukup!';
+        document.getElementById('msgBarangKeluar').classList.add('text-red-500');
+        return;
+      }
+      stock[nama] -= qty;
+      if (stock[nama] === 0) delete stock[nama];
+      saveStock(stock);
+      document.getElementById('msgBarangKeluar').textContent = `Barang keluar berhasil: ${qty} ${nama}`;
+      this.reset();
+    });
+
+    // Outgoing form
+    document.getElementById('formOutgoing').addEventListener('submit', function(e) {
+      e.preventDefault();
+      clearMessages();
+      const nama = document.getElementById('namaBarangOutgoing').value.trim();
+      const qty = parseInt(document.getElementById('qtyBarangOutgoing').value);
+      const toko = document.getElementById('tokoTujuan').value;
+      if (!nama || !qty || qty < 1 || !toko) {
+        document.getElementById('msgOutgoing').textContent = 'Input tidak valid!';
+        document.getElementById('msgOutgoing').classList.add('text-red-500');
+        return;
+      }
+      const stock = getStock();
+      if (!stock[nama] || stock[nama] < qty) {
+        document.getElementById('msgOutgoing').textContent = 'Stok tidak cukup!';
+        document.getElementById('msgOutgoing').classList.add('text-red-500');
+        return;
+      }
+      stock[nama] -= qty;
+      if (stock[nama] === 0) delete stock[nama];
+      saveStock(stock);
+      const outgoing = getOutgoing();
+      outgoing.push({
+        nama,
+        qty,
+        toko,
+        tanggal: new Date().toLocaleString()
+      });
+      saveOutgoing(outgoing);
+      document.getElementById('msgOutgoing').textContent = `Berhasil mengirim ${qty} ${nama} ke ${toko}`;
+      this.reset();
+      renderOutgoingTable();
+      renderStoreList();
+    });
+
+    // Populate store dropdown
+    function populateStoreDropdown() {
+      const select = document.getElementById('tokoTujuan');
+      select.innerHTML = '<option value="">-- Pilih Toko --</option>';
+      stores.forEach(store => {
+        select.innerHTML += `<option value="${store.name}">${store.id} ${store.name}</option>`;
+      });
+    }
+
+    // Render functions
+    function renderStoreList() {
+      const tbody = document.getElementById('storeListBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const outgoing = getOutgoing();
+      stores.forEach(store => {
+        const count = outgoing.filter(o => o.toko === store.name).length;
+        tbody.innerHTML += `
+          <tr>
+            <td class="px-4 py-2 border border-gray-300">${store.id}</td>
+            <td class="px-4 py-2 border border-gray-300">${store.name}</td>
+            <td class="px-4 py-2 border border-gray-300 text-center">
+              <button onclick="showStoreHistory('${store.name}')" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded">
+                Lihat Riwayat (${count})
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderStockTable() {
+      const stock = getStock();
+      const tbody = document.getElementById('tableStockBody');
+      tbody.innerHTML = '';
+      const keys = Object.keys(stock);
+      if (keys.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center py-4">Tidak ada stok</td></tr>';
+        return;
+      }
+      keys.forEach(item => {
+        tbody.innerHTML += `<tr><td class="px-4 py-2 border border-gray-300">${item}</td><td class="px-4 py-2 border border-gray-300">${stock[item]}</td></tr>`;
+      });
+    }
+
+    function renderOutgoingTable() {
+      const outgoing = getOutgoing();
+      const tbody = document.getElementById('tableOutgoingBody');
+      tbody.innerHTML = '';
+      if (outgoing.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Belum ada pengiriman</td></tr>';
+        return;
+      }
+      outgoing.forEach(o => {
+        tbody.innerHTML += `<tr><td class="px-4 py-2 border border-gray-300">${o.nama}</td><td class="px-4 py-2 border border-gray-300">${o.qty}</td><td class="px-4 py-2 border border-gray-300">${o.toko}</td><td class="px-4 py-2 border border-gray-300">${o.tanggal}</td></tr>`;
+      });
+    }
+
+    function showStoreHistory(storeName) {
+      const modal = document.getElementById('storeHistoryModal');
+      const modalTitle = document.getElementById('modalStoreName');
+      const tbody = document.getElementById('storeHistoryBody');
+      modalTitle.textContent = `Riwayat Pengiriman ke ${storeName}`;
+      const outgoing = getOutgoing().filter(o => o.toko === storeName);
+      tbody.innerHTML = '';
+      if (outgoing.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4">Belum ada pengiriman</td></tr>`;
+      } else {
+        outgoing.forEach(o => {
+          tbody.innerHTML += `<tr><td class="px-4 py-2 border border-gray-300">${o.nama}</td><td class="px-4 py-2 border border-gray-300">${o.qty}</td><td class="px-4 py-2 border border-gray-300">${o.tanggal}</td></tr>`;
+        });
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeStoreHistory() {
+      document.getElementById('storeHistoryModal').classList.add('hidden');
+    }
+
+    // Show default section
+    showSection('pengaturan');
+    lucide.createIcons();
+  </script>
+
+</body>
+</html>
+</content>
+</create_file> 
+
+<attempt_completion>
+Kode lengkap telah digabungkan dan diperbarui. Semua fitur ada: Barang Masuk (dengan manual & barcode), Barang Keluar, Stock, Outgoing to Store (dengan list store tetap dan riwayat), Pengaturan (dashboard dan store).
+
+Fitur baru: 
+- Daftar store tetap sesuai list Anda.
+- Riwayat pengiriman per store melalui modal.
+- Tema gelap, font pilihan, notifikasi.
+- Data tersimpan di localStorage.
+
+Silakan buka file ini di browser untuk menggunakan sistem lengkap!
+</attempt_completion>

@@ -2,25 +2,80 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>WMS dengan Scan & Spreadsheet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Store Sanghyang WMS</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
-<body class="p-4 bg-gray-100">
-  <h1 class="text-2xl font-bold mb-4">Warehouse WMS</h1>
+<body class="bg-gray-100">
 
-  <button onclick="startScan()" class="px-4 py-2 bg-green-600 text-white rounded">
-    Scan & Simpan
-  </button>
+  <!-- Navbar -->
+  <nav class="bg-blue-700 text-white p-4 flex justify-between">
+    <h1 class="text-lg font-bold">Store Sanghyang</h1>
+    <div>
+      <button onclick="showPage('dashboard')" class="px-2">Dashboard</button>
+      <button onclick="showPage('masuk')" class="px-2">Barang Masuk</button>
+      <button onclick="showPage('keluar')" class="px-2">Barang Keluar</button>
+    </div>
+  </nav>
 
-  <div id="reader" class="mt-4 hidden"></div>
+  <!-- Dashboard -->
+  <div id="dashboard" class="p-6">
+    <h2 class="text-2xl font-bold mb-4">Dashboard</h2>
+    <p>Selamat datang di sistem Warehouse Management Store Sanghyang.</p>
+  </div>
+
+  <!-- Barang Masuk -->
+  <div id="masuk" class="hidden p-6">
+    <h2 class="text-xl font-bold mb-4">Barang Masuk</h2>
+    <form onsubmit="submitForm(event, 'Masuk')">
+      <input id="kodeMasuk" placeholder="Kode Barang" class="border p-2 mr-2">
+      <input id="namaMasuk" placeholder="Nama Barang" class="border p-2 mr-2">
+      <input id="jumlahMasuk" type="number" placeholder="Jumlah" class="border p-2 mr-2">
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Simpan</button>
+    </form>
+    <button onclick="startScan('Masuk')" class="mt-4 bg-green-600 text-white px-4 py-2 rounded">📷 Scan Barcode</button>
+  </div>
+
+  <!-- Barang Keluar -->
+  <div id="keluar" class="hidden p-6">
+    <h2 class="text-xl font-bold mb-4">Barang Keluar</h2>
+    <form onsubmit="submitForm(event, 'Keluar')">
+      <input id="kodeKeluar" placeholder="Kode Barang" class="border p-2 mr-2">
+      <input id="namaKeluar" placeholder="Nama Barang" class="border p-2 mr-2">
+      <input id="jumlahKeluar" type="number" placeholder="Jumlah" class="border p-2 mr-2">
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Simpan</button>
+    </form>
+    <button onclick="startScan('Keluar')" class="mt-4 bg-green-600 text-white px-4 py-2 rounded">📷 Scan Barcode</button>
+  </div>
+
+  <!-- Scanner -->
+  <div id="reader" class="hidden p-4"></div>
 
   <script>
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyGDvn3QkWuEulkzvNMxyMx10Af7CiPfYjWmA2Iha3AROV3VcnW2eTF5fdb5A2mkj8K/exec";
     let html5QrCode;
 
-    function startScan() {
+    // Navigasi menu
+    function showPage(page) {
+      document.getElementById("dashboard").classList.add("hidden");
+      document.getElementById("masuk").classList.add("hidden");
+      document.getElementById("keluar").classList.add("hidden");
+      document.getElementById(page).classList.remove("hidden");
+    }
+
+    // Submit form manual
+    function submitForm(e, jenis) {
+      e.preventDefault();
+      const kode = document.getElementById(jenis === "Masuk" ? "kodeMasuk" : "kodeKeluar").value;
+      const nama = document.getElementById(jenis === "Masuk" ? "namaMasuk" : "namaKeluar").value;
+      const jumlah = document.getElementById(jenis === "Masuk" ? "jumlahMasuk" : "jumlahKeluar").value;
+      sendData(jenis, kode, nama, jumlah);
+      e.target.reset();
+    }
+
+    // Mulai scan barcode
+    function startScan(jenis) {
       const reader = document.getElementById("reader");
       reader.classList.remove("hidden");
 
@@ -30,34 +85,27 @@
         { fps: 10, qrbox: 250 },
         (decodedText) => {
           html5QrCode.stop().then(() => reader.classList.add("hidden"));
-          promptAndSend(decodedText);
+          const nama = prompt("Nama Barang:", "");
+          const jumlah = prompt("Jumlah:", "1");
+          if (nama && jumlah) sendData(jenis, decodedText, nama, jumlah);
         },
-        (err) => console.error(err)
+        (err) => console.warn(err)
       );
     }
 
-    function promptAndSend(decoded) {
-      const nama = prompt("Nama Barang:", "");
-      const jumlah = prompt("Jumlah:", "1");
-      if (!nama || !jumlah) return;
-
-      const payload = {
-        jenis: "Scan",
-        kodeBarang: decoded,
-        namaBarang: nama,
-        jumlah: jumlah
-      };
-
+    // Kirim data ke Spreadsheet
+    function sendData(jenis, kode, nama, jumlah) {
+      const payload = { jenis, kodeBarang: kode, namaBarang: nama, jumlah };
       fetch(WEBAPP_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
       .then(res => res.json())
-      .then(res => alert("Tersimpan ke Spreadsheet!\n" + decoded))
+      .then(data => alert(`✅ Data tersimpan: ${jenis} - ${kode}`))
       .catch(err => {
         console.error(err);
-        alert("Gagal kirim data ke Spreadsheet");
+        alert("❌ Gagal kirim data ke Spreadsheet");
       });
     }
   </script>
